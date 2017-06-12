@@ -14,7 +14,7 @@ fitsXmlDir = sys.argv[2] + '/fits-xml/'
 shutil.copytree(dirToBag, archiveBagDir)
 os.mkdir(fitsXmlDir)
 
-bag = bagit.make_bag(archiveBagDir) # converts dir to bag
+bag = bagit.make_bag(archiveBagDir)
 bag.save()
 
 shutil.copytree(archiveBagDir, examineBagDir)
@@ -29,11 +29,18 @@ subprocess.call(
 )
 
 xml = open(fitsXmlDir + 'bagit.txt.fits.xml')
-
-
-print(json.dumps(xmltodict.parse(xml.read()), indent=3))
+json = json.dumps(xmltodict.parse(xml.read()), indent=3)
+xml.close()
+jsonFile = open(fitsXmlDir + 'report.json', 'w+')
+jsonFile.write(json)
+jsonFile.close()
 
 """
+subprocess.call(
+    './json_to_csv.py ' +
+    json
+
+
 converter = xml2json(
     dirToBag + 'test.xml',
     fitsXmlDir + 'test.json',
