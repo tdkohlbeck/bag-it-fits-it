@@ -4,23 +4,23 @@ import shutil, os, sys, subprocess
 import bagit
 import json, csv, xmltodict, jsonstocsv
 
+# directory locations
 dirToBag = sys.argv[1]
-archiveBagDir = sys.argv[2] + '/master-bag'
-examineBagDir = sys.argv[2] + '/working-bag'
-fitsXmlDir = sys.argv[2] + '/fits-xml/'
+outputDir = sys.argv[2]
+masterBagDir = outputDir + '/master-bag'
+workingBagDir = outputDir + '/working-bag'
+fitsXmlDir = outputDir + '/fits-xml/'
 
-shutil.copytree(dirToBag, archiveBagDir)
+# create bags, directories
+shutil.copytree(dirToBag, masterBagDir)
 os.mkdir(fitsXmlDir)
-bag = bagit.make_bag(archiveBagDir)
+bag = bagit.make_bag(masterBagDir)
 bag.save()
-shutil.copytree(archiveBagDir, examineBagDir)
+shutil.copytree(masterBagDir, workingBagDir)
 
-cmd = './fits/fits.sh -r -i '+examineBagDir+' -o '+fitsXmlDir+' -x'
+# run FITS on working bag
+cmd = './fits/fits.sh -r -i ' + workingBagDir + ' -o ' + fitsXmlDir + ' -x'
 subprocess.call(cmd, shell=True)
-
-xml = open(fitsXmlDir + 'bagit.txt.fits.xml')
-jsonStr = json.dumps(xmltodict.parse(xml.read()))
-xml.close()
 
 def flattenDict(obj, delim):
     val = {}
@@ -33,12 +33,7 @@ def flattenDict(obj, delim):
             val[i] = obj[i]
     return val
 
-flatJson = flattenDict(json.loads(jsonStr), '__')
-
-#jsonFile = open(fitsXmlDir + 'report.json', 'w+')
-#jsonFile.write(json.dumps(flatJson, indent=2))
-#jsonFile.close()
-
+# convert xml reports to dicts, compile in list
 flatFitsDicts = []
 for filename in os.listdir(fitsXmlDir):
     fitsXmlReport = open(fitsXmlDir + filename)
@@ -47,27 +42,23 @@ for filename in os.listdir(fitsXmlDir):
     flatFitsDict = flattenDict(fitsDict, ' / ')
     flatFitsDicts.append(flatFitsDict)
 
-
-
+# place all dict keys in a list
 headers = []
 for fitsDict in flatFitsDicts:
     for key in fitsDict.keys():
         if key not in headers: headers.append(key)
 
+# write dict keys as csv column names
 csvFile = open(sys.argv[2]+'report.csv', 'w')
 pen = csv.writer(csvFile)
 pen.writerow(headers)
 
+# write values to relevant columns
 for fitsDict in flatFitsDicts:
-    #print('fitsDicts len: ' + str(len(fitsDicts)))
     row = []
     currentColumn = 0
     for key in fitsDict.keys():
-        #print('fitsDict len: ' + str(len(fitsDict.keys())))
-        #print(json.dumps(fitsDict, indent=2))
         if key == headers[currentColumn]:
-            #print('currentColumn: ' + str(currentColumn))
-            #print('row length: ' + str(len(row)))
             row.append(fitsDict[key])
         else:
             row.append('')
