@@ -11,23 +11,15 @@ fitsXmlDir = sys.argv[2] + '/fits-xml/'
 
 shutil.copytree(dirToBag, archiveBagDir)
 os.mkdir(fitsXmlDir)
-
 bag = bagit.make_bag(archiveBagDir)
 bag.save()
-
 shutil.copytree(archiveBagDir, examineBagDir)
 
-subprocess.call(
-    './fits/fits.sh -r -i ' +
-    examineBagDir  +
-    ' -o ' +
-    fitsXmlDir +
-    ' -x',
-    shell=True
-)
+cmd = './fits/fits.sh -r -i '+examineBagDir+' -o '+fitsXmlDir+' -x'
+subprocess.call(cmd, shell=True)
 
 xml = open(fitsXmlDir + 'bagit.txt.fits.xml')
-jsonStr = json.dumps(xmltodict.parse(xml.read()), indent=3)
+jsonStr = json.dumps(xmltodict.parse(xml.read()))
 xml.close()
 
 def flattenJson(obj, delim):
@@ -43,31 +35,16 @@ def flattenJson(obj, delim):
 
 flatJson = flattenJson(json.loads(jsonStr), '__')
 
-jsonFile = open(fitsXmlDir + 'report.json', 'w+')
-jsonFile.write(json.dumps(flatJson, indent=2))
-jsonFile.close()
+#jsonFile = open(fitsXmlDir + 'report.json', 'w+')
+#jsonFile.write(json.dumps(flatJson, indent=2))
+#jsonFile.close()
 
-"""
-subprocess.call(
-    './json_to_csv.py ' +
-    'textMD:textMD ' +
-    fitsXmlDir + 'report.json ' +
-    fitsXmlDir + 'report.csv',
-    shell=True
-)
-
-
-converter = xml2json(
-    dirToBag + 'test.xml',
-    fitsXmlDir + 'test.json',
-    encoding='utf-8'
-)
-converter.convert()
-
-converter = xml2json(
-    fitsXmlDir + 'bagit.txt.fits.xml',
-    fitsXmlDir + 'bagit.txt.fits.json',
-    encoding='utf-8'
-)
-converter.convert()
-"""
+for filename in os.listdir(fitsXmlDir):
+    print(fitsXmlDir + filename)
+    report = open(fitsXmlDir + filename)
+    obj = xmltodict.parse(report.read())
+    report.close()
+    reports = open(sys.argv[2] + 'reports.json', 'a+')
+    flatJson = flattenJson(obj, '__')
+    reports.write(json.dumps(flatJson, indent=2))
+    reports.close()
