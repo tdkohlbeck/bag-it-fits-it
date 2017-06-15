@@ -27,10 +27,10 @@ subprocess.call(cmd, shell=True)
 
 def flattenDict(obj, delim):
     val = {}
-    for i in obj:
+    for i in sorted(obj):
         if isinstance(obj[i], dict):
             get = flattenDict(obj[i], delim)
-            for j in get:
+            for j in sorted(get):
                 val[ i + delim + j ] = get[j]
         else:
             val[i] = obj[i]
@@ -39,12 +39,29 @@ def flattenDict(obj, delim):
 # convert xml reports to dicts, compile in list
 flatFitsDicts = []
 fitsReportFiles = sorted(os.listdir(fitsXmlDir))
+
+def checkReplace(name):
+    fh = open('/tmp/'+name+'.txt', 'r')
+    old = fh.read()
+    fh.close()
+    new = globals()[name]
+    print(name + ' changed: ' + str(str(old) != str(new)))
+    #print(old)
+    #print(new)
+    fh = open('/tmp/'+name+'.txt', 'w')
+    fh.write(str(globals()[name]))
+    fh.close()
+
+checkReplace('fitsReportFiles')
+
 for filename in fitsReportFiles:
     fitsXmlReport = open(fitsXmlDir + filename)
     fitsDict = xmltodict.parse(fitsXmlReport.read())
     fitsXmlReport.close()
-    flatFitsDict = flattenDict(fitsDict, ' / ')
+    flatFitsDict = flattenDict(fitsDict, '__')
     flatFitsDicts.append(flatFitsDict)
+
+checkReplace('flatFitsDicts')
 
 # place all dict keys in a list
 headers = ['filepath']
@@ -52,26 +69,22 @@ for fitsDict in flatFitsDicts:
     for key in sorted(fitsDict):
         if key not in headers: headers.append(str(key))
 
-# TODO * make sure same number of headers every time
-#      * write list to file, diff files every run
-#      * overwrite file for every run?
+checkReplace('headers')
+
 # write dict keys as csv column names
 csvFile = open(outputDir + 'report.csv', 'w')
 pen = csv.writer(csvFile)
 pen.writerow(headers)
 
-# TODO compare dict to row and header
 # write values to relevant columns
 currentRow = 0
 for fitsDict in flatFitsDicts:
     row = [ fitsReportFiles[currentRow] ]
-    print(currentRow)
-    for key in sorted(fitsDict):
-        for header in headers:
-            if key == header: row.append(fitsDict[key])
-            else: row.append('')
-            #if len(row) > 8: print(headers[len(row) % 8])
-
+    for header in headers:
+        if header != 'filepath' and header in fitsDict:
+            row.append(fitsDict[header])
+        elif header != 'filepath':
+            row.append('?')
     pen.writerow(row)
     currentRow += 1
 
