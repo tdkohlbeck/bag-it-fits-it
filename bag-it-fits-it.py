@@ -9,15 +9,21 @@ import json, csv, xmltodict
 
 # directory locations
 
-def message(args):
-    return {
+def error():
+    lines = [
+        'please provide:',
+        '1. a directory to bag-n-fits',
+        '2. optionally a directory to place output',
+        'if no second directory is provided, original location will be bagged',
+        'example: \> bag_it_fits_it.py /dir/to/bag /dir/to/output',
+    ]
+    for line in lines:
+        os.system('echo ' + line)
 
-    }[x]
 
 # TODO loop through lines of text, calling echo for each
 if len(sys.argv) <= 2:
-    error = 'insert helpful message here' #"please provide: 1\) a directory to bag-\'n-fits 2\) \(optionally\) a directory to place output \(if no second directory is provided, original location will be bagged nexample: > bag_it_fits_it.py /dir/to/bag"
-    os.system('echo ' + error)
+    error()
     quit()
 
 dirToBag = sys.argv[1]
@@ -64,7 +70,7 @@ def checkReplace(name):
     fh.write(str(globals()[name]))
     fh.close()
 
-# convert xmls to dicts
+# convert xmls to dicts and squash 'em
 for filename in fitsReportFiles:
     fitsXmlReport = open(fitsXmlDir + filename)
     fitsDict = xmltodict.parse(fitsXmlReport.read())
