@@ -3,11 +3,23 @@
 import shutil, os, sys, subprocess
 import bagit
 import filecmp
-import json, csv, xmltodict, jsonstocsv
+import json, csv, xmltodict
 
 # TODO create something like '"xml report" means "xmlFits"'?
 
 # directory locations
+
+def message(args):
+    return {
+
+    }[x]
+
+# TODO loop through lines of text, calling echo for each
+if len(sys.argv) <= 2:
+    error = 'insert helpful message here' #"please provide: 1\) a directory to bag-\'n-fits 2\) \(optionally\) a directory to place output \(if no second directory is provided, original location will be bagged nexample: > bag_it_fits_it.py /dir/to/bag"
+    os.system('echo ' + error)
+    quit()
+
 dirToBag = sys.argv[1]
 outputDir = sys.argv[2]
 masterBagDir = outputDir + '/master-bag'
@@ -52,8 +64,7 @@ def checkReplace(name):
     fh.write(str(globals()[name]))
     fh.close()
 
-checkReplace('fitsReportFiles')
-
+# convert xmls to dicts
 for filename in fitsReportFiles:
     fitsXmlReport = open(fitsXmlDir + filename)
     fitsDict = xmltodict.parse(fitsXmlReport.read())
@@ -61,15 +72,11 @@ for filename in fitsReportFiles:
     flatFitsDict = flattenDict(fitsDict, '__')
     flatFitsDicts.append(flatFitsDict)
 
-checkReplace('flatFitsDicts')
-
 # place all dict keys in a list
 headers = ['filepath']
 for fitsDict in flatFitsDicts:
     for key in sorted(fitsDict):
         if key not in headers: headers.append(str(key))
-
-checkReplace('headers')
 
 # write dict keys as csv column names
 csvFile = open(outputDir + 'report.csv', 'w')
