@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import shutil, os, sys, subprocess
+import shutil, os, sys, subprocess, platform
 import bagit
 import filecmp
 import json, csv, xmltodict
@@ -12,16 +12,16 @@ import json, csv, xmltodict
 def error():
     lines = [
         'please provide:',
+        '',
         '1. a directory to bag-n-fits',
         '2. optionally a directory to place output',
         'if no second directory is provided, original location will be bagged',
+        '',
         'example: \> bag_it_fits_it.py /dir/to/bag /dir/to/output',
     ]
     for line in lines:
         os.system('echo ' + line)
 
-
-# TODO loop through lines of text, calling echo for each
 if len(sys.argv) <= 2:
     error()
     quit()
@@ -39,8 +39,20 @@ bag = bagit.make_bag(masterBagDir)
 bag.save()
 shutil.copytree(masterBagDir, workingBagDir)
 
+# TODO download/unzip fits if not present
+# TODO command line option to point to already installed fits?
+"""
+if not os.path.exists('fits'):
+    cmd = 'wget https://projects.iq.harvard.edu/files/fits/files/fits-1.1.1.zip'
+    subprocess.call(cmd, shell=True)
+"""
+
+fits_script_type = ''
+if platform.system() == 'Windows': fits_script_type = 'bat'
+else: fits_script_type = 'sh'
+
 # run FITS on working bag
-cmd = './fits/fits.sh -r -i ' + workingBagDir + '/data/ -o ' + fitsXmlDir + ' -x'
+cmd = 'fits/fits.' + fits_script_type + ' -r -i ' + workingBagDir + '/data/ -o ' + fitsXmlDir + ' -x'
 subprocess.call(cmd, shell=True)
 
 def flattenDict(obj, delim):
@@ -92,7 +104,7 @@ pen.writerow(headers)
 # write values to relevant columns
 currentRow = 0
 for fitsDict in flatFitsDicts:
-    row = [ fitsReportFiles[currentRow] ]
+    row = [ os.path.abspath( fitsReportFiles[currentRow] ) ]
     for header in headers:
         if header != 'filepath' and header in fitsDict:
             row.append(fitsDict[header])
@@ -102,3 +114,5 @@ for fitsDict in flatFitsDicts:
     currentRow += 1
 
 csvFile.close()
+success_message = 'bags and report successfully created at: ' + os.path.abspath(outputDir)
+os.system('echo ' + success_message)
