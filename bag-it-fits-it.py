@@ -47,12 +47,12 @@ if not os.path.exists('fits'):
     subprocess.call(cmd, shell=True)
 """
 
-fits_script_type = ''
-if platform.system() == 'Windows': fits_script_type = 'bat'
-else: fits_script_type = 'sh'
+fits_script = ''
+if platform.system() == 'Windows': fits_script = 'fits\\fits'
+else: fits_script = 'fits/fits.sh'
 
 # run FITS on working bag
-cmd = 'fits/fits.' + fits_script_type + ' -r -i ' + workingBagDir + '/data/ -o ' + fitsXmlDir + ' -x'
+cmd = fits_script + ' -r -i ' + workingBagDir + '/data/ -o ' + fitsXmlDir + ' -x'
 subprocess.call(cmd, shell=True)
 
 def flattenDict(obj, delim):
