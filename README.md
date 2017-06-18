@@ -9,11 +9,11 @@
 		- [Installing Python (Windows)](#python-install-windows)
 		- [Installing Python (MacOS)](#python-install-macos)
 	- Java
-		- Installing Java (Windows)
-		- Installing Java (MacOS)
-	- FITS
-- Setup bag-it-fits-it.py
-- Using bag-it-fits-it.py
+		- Installing Java (Windows) (TODO)
+		- Installing Java (MacOS) (TODO)
+ 	- FITS (TODO?)
+- [Setup](#setup)
+- [How to Use](#how-to-use)
 
 ---
 
@@ -41,4 +41,32 @@ Python should come pre-installed on MacOS. To double check, run "python -V" in a
 $ python -V
 Python x.x.x
 $
+```
+
+---
+
+### [Setup](#setup)
+
+1. Git clone or download/unzip `bag-it-fits-it` directory to desired location
+2. Download/unzip the latest release of [FITS](https://projects.iq.harvard.edu/fits/downloads)
+3. rename the fits directory from `fits-x.x.x` (where x.x.x is the most recent version) to `fits`
+4. move the `fits` directory into the `bag-it-fits-it` directory (i.e. `path/to/bag-it-fits-it/fits/`)
+
+---
+
+### [How to Use](#how-to-use)
+
+1. Navigate to the `bag-it-fits-it` directory in the terminal/Command Prompt
+
+```sh
+~ $ cd path/to/bag-it-fits-it
+~/path/to/bag-it-fits-it $
+```
+
+2. Run `bag-it-fits-it.py` using two additional arguments
+	- the directory to bag 'n fits
+	- the location to place the report and bags
+
+```sh
+~/bag-it-fits-it $ bag-it-fits-it.py path/to/bag path/to/output
 ```
