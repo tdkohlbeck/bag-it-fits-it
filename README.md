@@ -6,8 +6,8 @@
 
 - Prerequisites
 	- Python
-		- [Installing Python (Windows)](python-install-windows)
-		- [Installing Python (MacOS)](python-install-macos)
+		- [Installing Python (Windows)](#python-install-windows)
+		- [Installing Python (MacOS)](#python-install-macos)
 	- Java
 		- Installing Java (Windows)
 		- Installing Java (MacOS)
@@ -17,7 +17,7 @@
 
 ---
 
-### [Installing Python (Windows)](python-install-windows)
+### [Installing Python (Windows)](#python-install-windows)
 
 First check if Python is already set up on your computer by running "python -V" in your Command Prompt.
 ```
@@ -34,7 +34,7 @@ If this command does not print a python version:
 
 ---
 
-### [Installing Python (MacOS)](python-install-macos)
+### [Installing Python (MacOS)](#python-install-macos)
 
 Python should come pre-installed on MacOS. To double check, run "python -V" in a terminal:
 ```sh
