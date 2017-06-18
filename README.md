@@ -29,7 +29,7 @@ C:\Users\Me>
 If this command does not print a python version:
 
 1. Navigate to http://python.org/downloads and download the latest Python 3.x.x release (not 2.7.x)
-2. Run the install file, select "Add Python 3.6 to PATH", and complete installation process
+2. Run the install file, check the "Add Python 3.6 to PATH" box, and complete installation process
 3. open a Command Prompt and
 
 ---
@@ -56,7 +56,10 @@ $
 
 ### [How to Use](#how-to-use)
 
-1. Navigate to the `bag-it-fits-it` directory in the terminal/Command Prompt
+1. Open a Command Prompt window (Windows) or Terminal window (MacOS)
+	- Windows: Start Menu -> Accessories -> Command Prompt (or "Search programs and files" for "Command Prompt")
+	- MacOS: Applications -> Utilities -> Terminal
+2. Navigate to the `bag-it-fits-it` directory in the terminal/Command Prompt
 
 ```sh
 ~ $ cd path/to/bag-it-fits-it
@@ -68,5 +71,5 @@ $
 	- the location to place the report and bags
 
 ```sh
-~/bag-it-fits-it $ bag-it-fits-it.py path/to/bag path/to/output
+~/path/to/bag-it-fits-it $ bag-it-fits-it.py path/to/bag path/to/output
 ```
