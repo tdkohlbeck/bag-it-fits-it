@@ -28,6 +28,9 @@ fits_script = ''
 if platform.system() == 'Windows':
     fits_script = 'fits\\fits.bat'
 else: fits_script = 'fits/fits.sh'
+if not os.path.exists('./fits'):
+    print('|bag-it-fits-it.py:\n|please place fits in same directory as script\n|and ensure the directory is named \'fits\'')
+    quit()
 
 dirToBag = os.path.abspath(sys.argv[1])
 outputDir = os.path.abspath(sys.argv[2])
