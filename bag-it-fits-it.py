@@ -88,8 +88,6 @@ for fitsDict in flatFitsDicts:
 
 # write dict keys as csv column names
 csvFile = open(outputDir + '/report.csv', 'w')
-pen = csv.writer(csvFile)
-pen.writerow(headers)
 
 manifest = workingBagDir + '/manifest-sha256.txt'
 file_locations = []
@@ -105,6 +103,7 @@ with open(manifest, 'r') as f:
 
 
 # write values to relevant columns
+rows = []
 currentRow = 0
 for fitsDict in flatFitsDicts:
     for location in file_locations:
@@ -119,7 +118,7 @@ for fitsDict in flatFitsDicts:
             row.append(fitsDict[header])
         elif header != 'filepath':
             row.append('?')
-    pen.writerow(row)
+    rows.append(row)
     currentRow += 1
 
 bag = bagit.Bag(workingBagDir)
@@ -127,6 +126,15 @@ print('|has our working bag emerged unscathed? ' + str(bag.is_valid()))
 if not bag.is_valid():
     print('|working bag got fucked')
     quit()
+
+clean_header_row = []
+for header in headers:
+    match = re.search(r'(\w+)$', header)
+    clean_header_row.append(match.group())
+
+pen = csv.writer(csvFile)
+pen.writerow(clean_header_row)
+pen.writerows(rows)
 
 csvFile.close()
 success_message = '|bags and report successfully created at: ' + os.path.abspath(outputDir)
