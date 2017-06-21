@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import csv, filecmp, json, os, platform, re, shutil, subprocess, sys
-import bagit, click, xmltodict
+import bagit, xmltodict
 
 # TODO: fits flag so they don't have to move/download it
 # TODO: download/unzip fits if not present
@@ -116,6 +116,7 @@ for filename in fitsReportFiles:
     fitsXmlReport.close()
     flatFitsDict = flattenDict(fitsDict, '__')
     flatFitsDicts.append(flatFitsDict)
+
 
 # place all dict keys in a list for csv headers
 headers = ['filepath']
