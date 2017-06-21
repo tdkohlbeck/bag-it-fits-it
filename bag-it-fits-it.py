@@ -53,20 +53,10 @@ if len(sys.argv) <= 2:
     print(errors['arg_length'])
     quit()
 
-if not os.path.isdir('./fits'):
-    print(errors['fits'])
-    quit()
-
 output = sys.argv[2]
 if re.search(r'(\s)', output):
     print(errors['spaces'])
     quit()
-
-fits_script = ''
-if platform.system() == 'Windows': # (special child)
-    fits_script = 'fits\\fits.bat'
-else:
-    fits_script = 'fits/fits.sh'
 
 
 # directory locations
@@ -91,8 +81,21 @@ else:
 
 
 # run FITS on working bag
+fits_dir = ''
+fits_script = ''
+
+if platform.system() == 'Windows': # (special child)
+    fits_script = r'\fits.bat'
+else:
+    fits_script = '/fits.sh'
+
+for item in os.listdir('.'):
+    is_fits = re.search(r'(fits)', item)
+    is_dir = os.path.isdir(item)
+    if is_fits and is_dir:
+        fits_dir = item
 cmd = (
-    fits_script + ' -r' +
+    fits_dir + fits_script + ' -r' +
     ' -i ' + working + 'data/' +
     ' -o' + fits_xml +
     ' -x'
@@ -100,6 +103,7 @@ cmd = (
 print('| running FITS on working directory:')
 subprocess.call(cmd, shell=True)
 print('| working directory successfully FITSed! :)')
+
 
 # convert xml reports to dicts, compile in list
 # TODO: remove unneeded sorted?
