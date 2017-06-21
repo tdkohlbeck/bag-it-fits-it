@@ -44,6 +44,13 @@ bag = bagit.make_bag(masterBagDir)
 bag.save()
 shutil.copytree(masterBagDir, workingBagDir)
 
+bag = bagit.Bag(masterBagDir)
+if not bag.is_valid():
+    print('|master bag is corrupted!')
+    quit()
+else:
+    print('|master bag is validated!')
+
 # TODO download/unzip fits if not present
 # TODO command line option to point to already installed fits?
 """
@@ -122,10 +129,11 @@ for fitsDict in flatFitsDicts:
     currentRow += 1
 
 bag = bagit.Bag(workingBagDir)
-print('|has our working bag emerged unscathed? ' + str(bag.is_valid()))
 if not bag.is_valid():
-    print('|working bag got fucked')
+    print('|working bag is corrupted!')
     quit()
+else:
+    print('|working bag is validated!')
 
 clean_header_row = []
 for header in headers:
