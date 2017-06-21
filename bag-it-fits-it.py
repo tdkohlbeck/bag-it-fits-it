@@ -1,20 +1,32 @@
 #!/usr/bin/env python
 
-import shutil, os, sys, subprocess, platform, re
-import bagit
-import filecmp
-import json, csv, xmltodict
+import csv, filecmp, json, os, platform, re, shutil, subprocess, sys
+import bagit, xmltodict
+
+errors = {
+    'arg_length': (
+        "|| bag-it-fits-it.py:\n"
+        "|please provide:\n"
+        "| 1. a directory to bag-n-fits\n"
+        "| 2. optionally a directory to place output\n"
+        "|if no second directory is provided, original location will be bagged\n"
+        "|example: $ bag-it-fits-it.py /dir/to/bag /dir/to/output"
+    ),
+    'fits': (
+        '|| bag-it-fits-it.py:\n'
+        '|please place fits in same directory as script\n'
+        '|and ensure the directory is named \'fits\''
+    )
+}
 
 # TODO create something like '"xml report" means "xmlFits"'?
 
 # do some pre-flight checks
 if len(sys.argv) <= 2:
-    print("""|| bag-it-fits-it.py:
-|please provide:
-|  1. a directory to bag-n-fits
-|  2. optionally a directory to place output
-|if no second directory is provided, original location will be bagged
-|example: \> bag_it_fits_it.py /dir/to/bag /dir/to/output""")
+    print(errors['arg_length'])
+    quit()
+if not os.path.isdir('./fits'):
+    print(errors['fits'])
     quit()
 
 fits_script = ''
@@ -22,11 +34,6 @@ if platform.system() == 'Windows':
     fits_script = 'fits\\fits.bat'
 else: fits_script = 'fits/fits.sh'
 
-if not os.path.isdir('./fits'):
-    print("""|| bag-it-fits-it.py:
-|please place fits in same directory as script
-|and ensure the directory is named \'fits\'""")
-    quit()
 
 # TODO: error for space in output dir name
 
