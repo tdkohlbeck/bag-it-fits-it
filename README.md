@@ -2,6 +2,8 @@
 ## An archiving and metadata-scraping tool
 ---
 
+(TODO: separate entire instructions into mac and windows)
+
 ## Table of Contents
 
 - Prerequisites

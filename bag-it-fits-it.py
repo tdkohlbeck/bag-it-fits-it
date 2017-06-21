@@ -3,6 +3,10 @@
 import csv, filecmp, json, os, platform, re, shutil, subprocess, sys
 import bagit, xmltodict
 
+# TODO: fits flag so they don't have to move/download it
+# TODO download/unzip fits if not present
+# TODO command line option to point to already installed fits?
+
 errors = {
     'arg_length': (
         "|| bag-it-fits-it.py:\n"
@@ -16,60 +20,16 @@ errors = {
         '|| bag-it-fits-it.py:\n'
         '|please place fits in same directory as script\n'
         '|and ensure the directory is named \'fits\''
+    ),
+    'spaces': (
+        '|| bag-it-fits-it.py\n'
+        '| please remove all spaces from the output directory name'
+        '| note: not sure if this is true for full Windows paths...'
     )
 }
 
-# TODO create something like '"xml report" means "xmlFits"'?
 
-# do some pre-flight checks
-if len(sys.argv) <= 2:
-    print(errors['arg_length'])
-    quit()
-if not os.path.isdir('./fits'):
-    print(errors['fits'])
-    quit()
-
-fits_script = ''
-if platform.system() == 'Windows':
-    fits_script = 'fits\\fits.bat'
-else: fits_script = 'fits/fits.sh'
-
-
-# TODO: error for space in output dir name
-
-# directory locations
-dirToBag = os.path.abspath(sys.argv[1])
-outputDir = os.path.abspath(sys.argv[2])
-masterBagDir = outputDir + '/master-bag/'
-workingBagDir = outputDir + '/working-bag/'
-fitsXmlDir = outputDir + '/fits-xml/'
-
-# create bags, directories
-shutil.copytree(dirToBag, masterBagDir)
-os.mkdir(fitsXmlDir)
-bag = bagit.make_bag(masterBagDir)
-bag.save()
-shutil.copytree(masterBagDir, workingBagDir)
-
-bag = bagit.Bag(masterBagDir)
-if not bag.is_valid():
-    print('|master bag is corrupted!')
-    quit()
-else:
-    print('|master bag is validated!')
-
-# TODO download/unzip fits if not present
-# TODO command line option to point to already installed fits?
-"""
-if not os.path.exists('fits'):
-    cmd = 'wget https://projects.iq.harvard.edu/files/fits/files/fits-1.1.1.zip'
-    subprocess.call(cmd, shell=True)
-"""
-
-# run FITS on working bag
-cmd = fits_script + ' -r -i ' + workingBagDir + 'data/ -o ' + fitsXmlDir + ' -x'
-subprocess.call(cmd, shell=True)
-
+# structured dict to serial (flat) dict
 def flattenDict(obj, delim):
     val = {}
     for i in sorted(obj):
@@ -81,14 +41,74 @@ def flattenDict(obj, delim):
             val[i] = obj[i]
     return val
 
+# master:  the bag to archive (and not touch)
+# output:  the directory to place the master and working
+#          bags, xml reports, and csv report. (TODO: specify
+#          these as optional flags?)
+# to_bag:  the directory to archive and scrape for metadata
+# wokring: the bag to scrape (and later examine)
+
+# do some pre-flight checks
+if len(sys.argv) <= 2:
+    print(errors['arg_length'])
+    quit()
+
+if not os.path.isdir('./fits'):
+    print(errors['fits'])
+    quit()
+
+output = sys.argv[2]
+if re.search(r'(\s)', output):
+    print(errors['spaces'])
+    quit()
+
+fits_script = ''
+if platform.system() == 'Windows': # (special child)
+    fits_script = 'fits\\fits.bat'
+else:
+    fits_script = 'fits/fits.sh'
+
+
+# directory locations
+to_bag = os.path.abspath(sys.argv[1])
+master = output + '/master-bag/'
+working = output + '/working-bag/'
+fits_xml = output + '/fits-xml/'
+
+
+# create bags, directories
+shutil.copytree(to_bag, master)
+bag = bagit.make_bag(master)
+bag.save()
+shutil.copytree(master, working)
+os.mkdir(fits_xml)
+bag = bagit.Bag(master)
+
+if not bag.is_valid():
+    print('| WARNING: master bag is corrupted!')
+else:
+    print('| master bag is validated! :)')
+
+
+# run FITS on working bag
+cmd = (
+    fits_script + ' -r' +
+    ' -i ' + working + 'data/' +
+    ' -o' + fits_xml +
+    ' -x'
+)
+print('| running FITS on working directory:')
+subprocess.call(cmd, shell=True)
+print('| working directory successfully FITSed! :)')
+
 # convert xml reports to dicts, compile in list
 # TODO: remove unneeded sorted?
 flatFitsDicts = []
-fitsReportFiles = sorted(os.listdir(fitsXmlDir))
+fitsReportFiles = sorted(os.listdir(fits_xml))
 
 # convert xmls to dicts and squash 'em
 for filename in fitsReportFiles:
-    fitsXmlReport = open(fitsXmlDir + filename)
+    fitsXmlReport = open(fits_xml + filename)
     fitsDict = xmltodict.parse(fitsXmlReport.read())
     fitsXmlReport.close()
     flatFitsDict = flattenDict(fitsDict, '__')
@@ -101,9 +121,9 @@ for fitsDict in flatFitsDicts:
         if key not in headers: headers.append(str(key))
 
 # write dict keys as csv column names
-csvFile = open(outputDir + '/report.csv', 'w')
+csvFile = open(output + '/report.csv', 'w')
 
-manifest = workingBagDir + '/manifest-sha256.txt'
+manifest = working + '/manifest-sha256.txt'
 file_locations = []
 with open(manifest, 'r') as f:
     for line in f:
@@ -125,7 +145,7 @@ for fitsDict in flatFitsDicts:
         match = re.search(r'(.+)(?=.fits.xml)', report)
         filename = match.group()
         if filename == location[-len(filename):]:
-            row = [ os.path.abspath(workingBagDir + location) ]
+            row = [ os.path.abspath(working + location) ]
     # TODO: bag location, not fits xml location
     for header in headers:
         if header != 'filepath' and header in fitsDict:
@@ -135,12 +155,13 @@ for fitsDict in flatFitsDicts:
     rows.append(row)
     currentRow += 1
 
-bag = bagit.Bag(workingBagDir)
+
+# validate working bag after scrape
+bag = bagit.Bag(working)
 if not bag.is_valid():
-    print('|working bag is corrupted!')
-    quit()
+    print('| working bag is corrupted!')
 else:
-    print('|working bag is validated!')
+    print('| working bag is validated! :D')
 
 clean_header_row = []
 for header in headers:
@@ -152,5 +173,5 @@ pen.writerow(clean_header_row)
 pen.writerows(rows)
 
 csvFile.close()
-success_message = '|bags and report successfully created at: ' + os.path.abspath(outputDir)
+success_message = '| bags and report successfully created at: ' + os.path.abspath(output)
 print(success_message)
