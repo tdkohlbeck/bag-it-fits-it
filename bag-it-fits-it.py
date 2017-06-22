@@ -1,7 +1,34 @@
 #!/usr/bin/env python
 
-import csv, filecmp, json, os, platform, re, shutil, subprocess, sys
+import argparse, csv, filecmp, json, os, platform, re, shutil, subprocess, sys
 import bagit, xmltodict
+
+parser = argparse.ArgumentParser(
+    description=(
+        '1. Creates two archive directories (working and master) using the BagIt specification, '
+        '2. Runs FITS to generate xml reports on all working bag files, '
+        '3. Compiles all xml reports into a single csv file'
+    )
+)
+parser.add_argument('input',
+    help='the directory to bag \'n fits'
+)
+parser.add_argument('-o', '--output',
+    help='the location to place bags and reports'
+)
+parser.add_argument('-m', '--master',
+    help='the location to place the master bag'
+)
+parser.add_argument('-w', '--working',
+    help='the location to place the working bag'
+)
+parser.add_argument('-x', '--xml',
+    help='the location to place the fits.xml reports'
+)
+parser.add_argument('-c', '--csv',
+    help='the location to place the csv report'
+)
+args = parser.parse_args()
 
 # TODO: fits flag so they don't have to move/download it
 # TODO: download/unzip fits if not present
@@ -10,6 +37,7 @@ import bagit, xmltodict
 # TODO: remove unneeded sorted?
 # TODO: convert spaghetti to list comprehensions
 # TODO: replace os.system with subprocess -- see stack overflow
+# TODO: lint(dirpath) to replace ' ' with '_', remove double slashes and flip if windows
 
 """
 function order:
@@ -74,23 +102,21 @@ def flattenDict(obj, delim):
 
 
 # do some pre-flight checks
-if len(sys.argv) <= 2:
+"""if len(sys.argv) <= 2:
     print(errors['arg_length'])
     quit()
-output = sys.argv[2]  # the directory to place the master and working bags, xml reports, and csv report.
-if re.search(r'(\s)', output):
+output = sys.argv[2]  # the directory to place the master and working bags, xml reports, and csv report."""
+# TODO: check for spaces in all options
+if args.output and re.search(r'(\s)', args.output):
     print(errors['spaces'])
     quit()
 
 
-# the directory to archive and scrape for metadata
-to_bag = os.path.abspath(sys.argv[1])
-# the bag to archive (and not touch)
-master = output + '/master-bag/'
-# the bag to scrape (and later examine i.e. work with)
-working = output + '/working-bag/'
-# the directory where fits.xml reports are placed
-fits_xml = output + '/fits-xml/'
+to_bag = args.input
+output = args.output + '/bags-and-reports/' if args.output else args.input + '/bags-and-reports/'
+master = args.master + '/master/' if args.master else output + '/master/'
+working = args.working + '/working/' if args.working else output + '/working/'
+fits_xml = args.xml + '/fits-xml/' if args.xml else output + '/fits-xml/'
 
 
 # create bags, directories
@@ -98,6 +124,8 @@ shutil.copytree(to_bag, master)
 bag = bagit.make_bag(master)
 bag.save()
 shutil.copytree(master, working)
+dirs = [ os.path.abspath(x) for x in sys.argv[1:] ]
+print(dirs)
 os.mkdir(fits_xml)
 validate_bag(master)
 
