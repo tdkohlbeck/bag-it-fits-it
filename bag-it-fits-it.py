@@ -43,7 +43,7 @@ errors = {
 }
 
 def create_bags(in_dir, out_dir=None, master=None, working=None):
-    out_dir = in_dir + 'bags-and-reports/' if not out_dir else out_dir + 'bags-and-reports/'
+    out_dir = in_dir + 'bags/' if not out_dir else out_dir + 'bags/'
     master = out_dir + 'master/' if not master else master + 'master/'
     working = out_dir + 'working/' if not working else working + 'working/'
 
@@ -51,6 +51,13 @@ def create_bags(in_dir, out_dir=None, master=None, working=None):
     bag = bagit.make_bag(master)
     bag.save()
     shutil.copytree(master, working)
+
+def validate_bag(bag_dir):
+    bag = bagit.Bag(bag_dir)
+    good = bag_dir + ' validated!'
+    bad = bag_dir + ' corrupted!'
+    result = good if bag.is_valid() else bad
+    print('| ' + result)
 
 
 # structured dict to serial (flat) dict
@@ -92,11 +99,7 @@ bag = bagit.make_bag(master)
 bag.save()
 shutil.copytree(master, working)
 os.mkdir(fits_xml)
-if not bag.is_valid():
-    print('| WARNING: master bag is corrupted!')
-else:
-    print('| master bag is validated! :)')
-
+validate_bag(master)
 
 # run FITS on working bag
 fits_dir = ''
@@ -173,11 +176,7 @@ for fitsDict in flatFitsDicts:
 
 
 # validate working bag after scrape
-bag = bagit.Bag(working)
-if not bag.is_valid():
-    print('| working bag is corrupted!')
-else:
-    print('| working bag is validated! :D')
+validate_bag(working)
 
 
 # write headers and rows to csv
