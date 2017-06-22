@@ -1,13 +1,28 @@
 #!/usr/bin/env python
 
+# TODO: fits flag so they don't have to move/download it
+# TODO: download/unzip fits if not present
+# TODO command line option to point to already installed fits?
+# TODO: command line for location of fits.xml, csv, bags, etc.?
+# TODO: remove unneeded sorted?
+# TODO: convert spaghetti to list comprehensions
+# TODO: replace os.system with subprocess -- see stack overflow
+# TODO: lint(dirpath) to replace ' ' with '_', remove double slashes and flip if windows
+# TODO: check for spaces in all options
+
 import argparse, csv, filecmp, json, os, platform, re, shutil, subprocess, sys
 import bagit, xmltodict
+
 
 parser = argparse.ArgumentParser(
     description=(
         '1. Creates two archive directories (working and master) using the BagIt specification, '
         '2. Runs FITS to generate xml reports on all working bag files, '
         '3. Compiles all xml reports into a single csv file'
+    ),
+    epilog=(
+        'If master, working, xml, or csv are omitted, their location will default to output. '
+        'If output is omitted, its location will default to input'
     )
 )
 parser.add_argument('input',
@@ -30,24 +45,6 @@ parser.add_argument('-c', '--csv',
 )
 args = parser.parse_args()
 
-# TODO: fits flag so they don't have to move/download it
-# TODO: download/unzip fits if not present
-# TODO command line option to point to already installed fits?
-# TODO: command line for location of fits.xml, csv, bags, etc.?
-# TODO: remove unneeded sorted?
-# TODO: convert spaghetti to list comprehensions
-# TODO: replace os.system with subprocess -- see stack overflow
-# TODO: lint(dirpath) to replace ' ' with '_', remove double slashes and flip if windows
-
-"""
-function order:
-parseArgsOpts()
-bag_copy_and_validate_dir()
-cleanHeaders(headers)
-fits(working_bag)
-convert_to_dict(xml)
-flatten_dict(dict)
-"""
 
 errors = {
     'arg_length': (
@@ -70,24 +67,18 @@ errors = {
     )
 }
 
-def create_bags(in_dir, out_dir=None, master=None, working=None):
-    out_dir = in_dir + 'bags/' if not out_dir else out_dir + 'bags/'
-    master = out_dir + 'master/' if not master else master + 'master/'
-    working = out_dir + 'working/' if not working else working + 'working/'
-
-    shutil.copytree(in_dir, master)
-    bag = bagit.make_bag(master)
+# util functions
+def create_bags(in_dir, master_dir, working_dir):
+    shutil.copytree(in_dir, master_dir)
+    bag = bagit.make_bag(master_dir)
     bag.save()
-    shutil.copytree(master, working)
-
+    shutil.copytree(master_dir, working_dir)
 def validate_bag(bag_dir):
     bag = bagit.Bag(bag_dir)
     good = bag_dir + ' validated!'
     bad = bag_dir + ' corrupted!'
     result = good if bag.is_valid() else bad
     print('| ' + result)
-
-
 # structured dict to serial (flat) dict
 def flattenDict(obj, delim):
     val = {}
@@ -101,12 +92,6 @@ def flattenDict(obj, delim):
     return val
 
 
-# do some pre-flight checks
-"""if len(sys.argv) <= 2:
-    print(errors['arg_length'])
-    quit()
-output = sys.argv[2]  # the directory to place the master and working bags, xml reports, and csv report."""
-# TODO: check for spaces in all options
 if args.output and re.search(r'(\s)', args.output):
     print(errors['spaces'])
     quit()
@@ -119,17 +104,13 @@ working = args.working + '/working/' if args.working else output + '/working/'
 fits_xml = args.xml + '/fits-xml/' if args.xml else output + '/fits-xml/'
 
 
-# create bags, directories
-shutil.copytree(to_bag, master)
-bag = bagit.make_bag(master)
-bag.save()
-shutil.copytree(master, working)
-dirs = [ os.path.abspath(x) for x in sys.argv[1:] ]
-print(dirs)
-os.mkdir(fits_xml)
+# create bags, directories, validate master
+create_bags(to_bag, master, working)
 validate_bag(master)
 
+
 # run FITS on working bag
+os.mkdir(fits_xml)
 fits_dir = ''
 fits_script = ''
 if platform.system() == 'Windows': # (special child)
