@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 # TODO: download/unzip fits if not present
-# TODO: command line for location of fits.xml, csv, bags, etc.?
 # TODO: convert spaghetti to list comprehensions
 # TODO: lint(dirpath) to replace ' ' with '_', remove double slashes and flip if windows
 # TODO: check for spaces in all options
@@ -104,6 +103,7 @@ output = args.output + '/bags-and-reports/' if args.output else args.input + '/b
 master = args.master + '/master/' if args.master else output + '/master/'
 working = args.working + '/working/' if args.working else output + '/working/'
 fits_xml = args.xml + '/fits-xml/' if args.xml else output + '/fits-xml/'
+report_dir = args.csv if args.csv else output
 fits_dir = args.fits if args.fits else ''
 
 
@@ -129,7 +129,7 @@ if not fits_dir:
         print('| or place the fits directory in your script folder')
         quit()
 
-os.mkdir(fits_xml)
+os.makedirs(fits_xml)
 print('| running FITS on working directory:')
 call([
     fits_dir + fits_script,
@@ -205,7 +205,8 @@ for header in headers:
     clean_header_row.append(
         camel_case_to_spaces(match.group())
     )
-with open(output +'/report.csv', 'w') as f:
+os.makedirs(report_dir)
+with open(report_dir +'/report.csv', 'w') as f:
     pen = csv.writer(f)
     pen.writerow(clean_header_row)
     pen.writerows(rows)
