@@ -41,17 +41,18 @@ errors = {
         '| note: not sure if this is true for full Windows paths...'
     )
 }
-"""
-def create_bags(in_dir, out_dir=False, master, working):
-    out_dir = in_dir if no out_dir else out_dir
-    master = out_dir + 'master/' if no master else master + 'master/'
-    working = out_dir + 'working/' if no working else working + 'working/'
+
+def create_bags(in_dir, out_dir=None, master=None, working=None):
+    out_dir = in_dir + 'bags-and-reports/' if not out_dir else out_dir + 'bags-and-reports/'
+    master = out_dir + 'master/' if not master else master + 'master/'
+    working = out_dir + 'working/' if not working else working + 'working/'
 
     shutil.copytree(in_dir, master)
     bag = bagit.make_bag(master)
     bag.save()
     shutil.copytree(master, working)
-"""
+
+
 # structured dict to serial (flat) dict
 def flattenDict(obj, delim):
     val = {}
@@ -75,11 +76,14 @@ if re.search(r'(\s)', output):
     quit()
 
 
-# directory locations
-to_bag = os.path.abspath(sys.argv[1]) # the directory to archive and scrape for metadata
-master = output + '/master-bag/' # the bag to archive (and not touch)
-working = output + '/working-bag/' # the bag to scrape (and later examine)
-fits_xml = output + '/fits-xml/' # the directory where fits.xml reports are placed
+# the directory to archive and scrape for metadata
+to_bag = os.path.abspath(sys.argv[1])
+# the bag to archive (and not touch)
+master = output + '/master-bag/'
+# the bag to scrape (and later examine i.e. work with)
+working = output + '/working-bag/'
+# the directory where fits.xml reports are placed
+fits_xml = output + '/fits-xml/'
 
 
 # create bags, directories
