@@ -90,7 +90,9 @@ def flattenDict(obj, delim):
         else:
             val[i] = obj[i]
     return val
-
+def camel_case_to_spaces(string):
+    converted = re.sub(r'(.)([A-Z][a-z]+)', r'\1 \2', string)
+    return re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', converted).title()
 
 if args.output and re.search(r'(\s)', args.output):
     print(errors['spaces'])
@@ -157,7 +159,7 @@ headers = ['filepath']
 for fitsDict in flatFitsDicts:
     for key in sorted(fitsDict):
         if key not in headers:
-            headers.append(str(key))
+            headers.append(key)
 
 
 # grab filepaths from bag manifest
@@ -200,7 +202,9 @@ validate_bag(working)
 clean_header_row = []
 for header in headers:
     match = re.search(r'(\w+)$', header)
-    clean_header_row.append(match.group())
+    clean_header_row.append(
+        camel_case_to_spaces(match.group())
+    )
 with open(output +'/report.csv', 'w') as f:
     pen = csv.writer(f)
     pen.writerow(clean_header_row)
