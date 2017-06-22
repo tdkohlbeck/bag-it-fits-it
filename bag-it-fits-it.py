@@ -4,7 +4,6 @@
 # TODO: download/unzip fits if not present
 # TODO command line option to point to already installed fits?
 # TODO: command line for location of fits.xml, csv, bags, etc.?
-# TODO: remove unneeded sorted?
 # TODO: convert spaghetti to list comprehensions
 # TODO: replace os.system with subprocess -- see stack overflow
 # TODO: lint(dirpath) to replace ' ' with '_', remove double slashes and flip if windows
@@ -82,10 +81,10 @@ def validate_bag(bag_dir):
 # structured dict to serial (flat) dict
 def flattenDict(obj, delim):
     val = {}
-    for i in sorted(obj):
+    for i in obj:
         if isinstance(obj[i], dict):
             get = flattenDict(obj[i], delim)
-            for j in sorted(get):
+            for j in get:
                 val[ i + delim + j ] = get[j]
         else:
             val[i] = obj[i]
@@ -135,7 +134,7 @@ print('| working directory successfully FITSed! :)')
 
 # convert xmls to dicts and squash 'em
 flatFitsDicts = []
-fitsReportFiles = sorted(os.listdir(fits_xml))
+fitsReportFiles = os.listdir(fits_xml)
 for filename in fitsReportFiles:
     fitsXmlReport = open(fits_xml + filename)
     fitsDict = xmltodict.parse(fitsXmlReport.read())
