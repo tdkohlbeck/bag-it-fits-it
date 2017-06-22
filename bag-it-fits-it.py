@@ -9,6 +9,7 @@ import bagit, xmltodict
 # TODO: command line for location of fits.xml, csv, bags, etc.?
 # TODO: remove unneeded sorted?
 # TODO: convert spaghetti to list comprehensions
+# TODO: replace os.system with subprocess -- see stack overflow
 
 """
 function order:
@@ -40,8 +41,17 @@ errors = {
         '| note: not sure if this is true for full Windows paths...'
     )
 }
+"""
+def create_bags(in_dir, out_dir=False, master, working):
+    out_dir = in_dir if no out_dir else out_dir
+    master = out_dir + 'master/' if no master else master + 'master/'
+    working = out_dir + 'working/' if no working else working + 'working/'
 
-
+    shutil.copytree(in_dir, master)
+    bag = bagit.make_bag(master)
+    bag.save()
+    shutil.copytree(master, working)
+"""
 # structured dict to serial (flat) dict
 def flattenDict(obj, delim):
     val = {}
@@ -99,11 +109,11 @@ for item in os.listdir('.'):
 cmd = (
     fits_dir + fits_script + ' -r' +
     ' -i ' + working + 'data/' +
-    ' -o' + fits_xml +
+    ' -o ' + fits_xml +
     ' -x'
 )
 print('| running FITS on working directory:')
-subprocess.call(cmd, shell=True)
+subprocess.call(cmd, shell=True) # TODO: use strings for shell=false
 print('| working directory successfully FITSed! :)')
 
 
