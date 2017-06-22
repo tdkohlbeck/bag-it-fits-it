@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 
-# TODO: fits flag so they don't have to move/download it
 # TODO: download/unzip fits if not present
-# TODO command line option to point to already installed fits?
 # TODO: command line for location of fits.xml, csv, bags, etc.?
 # TODO: convert spaghetti to list comprehensions
-# TODO: replace os.system with subprocess -- see stack overflow
 # TODO: lint(dirpath) to replace ' ' with '_', remove double slashes and flip if windows
 # TODO: check for spaces in all options
 
-import argparse, csv, filecmp, json, os, platform, re, shutil, subprocess, sys
+from subprocess import call
+import argparse, csv, filecmp, json, os, platform, re, shutil, sys
 import bagit, xmltodict
 
 
@@ -41,6 +39,9 @@ parser.add_argument('-x', '--xml',
 )
 parser.add_argument('-c', '--csv',
     help='the location to place the csv report'
+)
+parser.add_argument('-f', '--fits',
+    help='the location of the fits directory (if not in script directory)'
 )
 args = parser.parse_args()
 
@@ -101,6 +102,7 @@ output = args.output + '/bags-and-reports/' if args.output else args.input + '/b
 master = args.master + '/master/' if args.master else output + '/master/'
 working = args.working + '/working/' if args.working else output + '/working/'
 fits_xml = args.xml + '/fits-xml/' if args.xml else output + '/fits-xml/'
+fits_dir = args.fits if args.fits else ''
 
 
 # create bags, directories, validate master
@@ -109,26 +111,33 @@ validate_bag(master)
 
 
 # run FITS on working bag
+is_win = platform.system() == 'Windows' # special child
+fits_script = r'\fits.bat' if is_win else '/fits.sh'
+if not fits_dir:
+    print('| no fits location given, searching script directory...')
+    for item in os.listdir('.'):
+        is_fits = re.search(r'(fits)', item)
+        is_dir = os.path.isdir(item)
+        if is_fits and is_dir:
+            print('| fits directory found!')
+            fits_dir = item
+    if not fits_dir:
+        print('| unable to find a fits directory!')
+        print('| please specify a location using the --fits option')
+        print('| or place the fits directory in your script folder')
+        quit()
+
 os.mkdir(fits_xml)
-fits_dir = ''
-fits_script = ''
-if platform.system() == 'Windows': # (special child)
-    fits_script = r'\fits.bat'
-else:
-    fits_script = '/fits.sh'
-for item in os.listdir('.'):
-    is_fits = re.search(r'(fits)', item)
-    is_dir = os.path.isdir(item)
-    if is_fits and is_dir:
-        fits_dir = item
-cmd = (
-    fits_dir + fits_script + ' -r' +
-    ' -i ' + working + 'data/' +
-    ' -o ' + fits_xml +
-    ' -x'
-)
 print('| running FITS on working directory:')
-subprocess.call(cmd, shell=True) # TODO: use strings for shell=false
+call([
+    fits_dir + fits_script,
+    '-r',
+    '-i',
+    working + 'data/',
+    '-o',
+    fits_xml,
+    '-x'
+])
 print('| working directory successfully FITSed! :)')
 
 
