@@ -4,6 +4,8 @@
 # TODO: convert spaghetti to list comprehensions
 # TODO: lint(dirpath) to replace ' ' with '_', remove double slashes and flip if windows
 # TODO: check for spaces in all options
+# TODO: better makedirs (check for dirs)
+# TODO: if folder exists... overwrite? user prompt?
 
 from subprocess import call
 import argparse, csv, filecmp, json, os, platform, re, shutil, sys
@@ -74,8 +76,8 @@ def create_bags(in_dir, master_dir, working_dir):
     shutil.copytree(master_dir, working_dir)
 def validate_bag(bag_dir):
     bag = bagit.Bag(bag_dir)
-    good = bag_dir + ' validated!'
-    bad = bag_dir + ' corrupted!'
+    good = 'VALIDATED! bag at ' + bag_dir
+    bad = 'CORRUPTED! bag at ' + bag_dir
     result = good if bag.is_valid() else bad
     print('| ' + result)
 # structured dict to serial (flat) dict
@@ -92,23 +94,29 @@ def flattenDict(obj, delim):
 def camel_case_to_spaces(string):
     converted = re.sub(r'(.)([A-Z][a-z]+)', r'\1 \2', string)
     return re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', converted).title()
+# overload path primary with backup appending sub
+def path_overload(primary_dir, backup_dir, sub_dir=''):
+    if primary_dir:
+        return primary_dir + sub_dir
+    else:
+        return backup_dir + sub_dir
+
 
 if args.output and re.search(r'(\s)', args.output):
     print(errors['spaces'])
     quit()
 
 
-to_bag = args.input
-output = args.output + '/bags-and-reports/' if args.output else args.input + '/bags-and-reports/'
-master = args.master + '/master/' if args.master else output + '/master/'
-working = args.working + '/working/' if args.working else output + '/working/'
-fits_xml = args.xml + '/fits-xml/' if args.xml else output + '/fits-xml/'
-report_dir = args.csv if args.csv else output
-fits_dir = args.fits if args.fits else ''
+output = path_overload(args.output, args.input, '') # args.output + 'output/' if args.output else to_bag + 'output/'
+master = path_overload(args.master, output, 'master/') # args.master + 'master/' if args.master else output + 'master/'
+working = path_overload(args.working, output, 'working/') # args.working + '/working-bag/' if args.working else output + '/working/'
+xml_dir = path_overload(args.xml, output, 'fits_xml/') # args.xml + '/fits-xml/' if args.xml else output + '/fits-xml/'
+report_dir = path_overload(args.csv, output) # args.csv if args.csv else output
+fits_dir = path_overload(args.fits, '') # args.fits if args.fits else ''
 
 
 # create bags, directories, validate master
-create_bags(to_bag, master, working)
+create_bags(args.input, master, working)
 validate_bag(master)
 
 
@@ -129,7 +137,7 @@ if not fits_dir:
         print('| or place the fits directory in your script folder')
         quit()
 
-os.makedirs(fits_xml)
+os.makedirs(xml_dir)
 print('| running FITS on working directory:')
 call([
     fits_dir + fits_script,
@@ -137,7 +145,7 @@ call([
     '-i',
     working + 'data/',
     '-o',
-    fits_xml,
+    xml_dir,
     '-x'
 ])
 print('| working directory successfully FITSed! :)')
@@ -145,9 +153,9 @@ print('| working directory successfully FITSed! :)')
 
 # convert xmls to dicts and squash 'em
 flatFitsDicts = []
-fitsReportFiles = os.listdir(fits_xml)
+fitsReportFiles = os.listdir(xml_dir)
 for filename in fitsReportFiles:
-    fitsXmlReport = open(fits_xml + filename)
+    fitsXmlReport = open(xml_dir + filename)
     fitsDict = xmltodict.parse(fitsXmlReport.read())
     fitsXmlReport.close()
     flatFitsDict = flattenDict(fitsDict, '__')
@@ -205,7 +213,9 @@ for header in headers:
     clean_header_row.append(
         camel_case_to_spaces(match.group())
     )
-os.makedirs(report_dir)
+
+if not os.path.isdir(report_dir):
+    os.makedirs(report_dir)
 with open(report_dir +'/report.csv', 'w') as f:
     pen = csv.writer(f)
     pen.writerow(clean_header_row)
