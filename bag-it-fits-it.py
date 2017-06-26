@@ -4,8 +4,6 @@
 # TODO: convert spaghetti to list comprehensions
 # TODO: lint(dirpath) to replace ' ' with '_', remove double slashes and flip if windows
 # TODO: check for spaces in all options
-# TODO: better makedirs (check for dirs)
-# TODO: if folder exists... overwrite? user prompt?
 
 from subprocess import call
 import argparse, csv, filecmp, json, os, re, shutil, sys
@@ -66,46 +64,38 @@ utils.create_bags(args.input, master, working)
 utils.validate_bag(master)
 utils.run_fits(working, xml_dir, fits_dir)
 
+
 # convert xmls to dicts and squash 'em
 xml_files = [ xml for xml in os.listdir(xml_dir) ]
-flatFitsDicts = [
+flat_reports = [
     utils.xml_to_flat_dict(xml_dir + xml)
     for xml in xml_files
 ]
 
-# place all dict keys in a list for csv headers
+
+# place every key in revery report in a list for csv headers
 headers = ['filepath']
-for fitsDict in flatFitsDicts:
-    for key in sorted(fitsDict):
+for report in flat_reports:
+    for key in sorted(report):
         if key not in headers:
             headers.append(key)
 
 
-# grab filepaths from bag manifest
-manifest = working + '/manifest-sha256.txt'
-file_locations = []
-with open(manifest, 'r') as f:
-    for line in f:
-        match = re.search(r'(data.+)', line)
-        if match:
-            file_locations.append(match.group())
-        else:
-            file_locations.append('Not Found')
-
 
 # write values to relevant columns
+filepaths = utils.bag_filepaths(working)
 rows = []
 current_row = 0
-for fitsDict in flatFitsDicts:
-    for location in file_locations:
+for report in flat_reports:
+    for filepath in filepaths:
         report = xml_files[current_row]
         match = re.search(r'(.+)(?=.fits.xml)', report)
         filename = match.group()
-        if filename == location[-len(filename):]:
-            row = [ os.path.abspath(working + location) ]
+        if filename == filepath[-len(filename):]:
+            row = [ os.path.abspath(working + filepath) ]
     for header in headers:
-        if header != 'filepath' and header in fitsDict:
-            row.append(fitsDict[header])
+        if header != 'filepath' and header in report:
+            row.append(report[header])
         elif header != 'filepath':
             row.append('n/a')
     rows.append(row)

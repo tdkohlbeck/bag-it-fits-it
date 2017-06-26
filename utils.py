@@ -16,6 +16,7 @@ errors = {
     )
 }
 
+# TODO: os.makedirs(handle(file)), os.copytree(handle(file))
 def make_dir(filepath):
     if os.path.exists(filepath):
         user_choice = input('| WARNING! ' + filepath + ' exists. Overwrite? [Y/n]: ')
@@ -68,7 +69,7 @@ def run_fits(in_dir, out_dir, fits_dir=None):
     ])
     print('| SUCCESS! working directory successfully FITSed! :)')
 
-
+# TODO: create_bag, invoke twice
 def create_bags(in_dir, master_dir, working_dir):
     copy_dir(in_dir, master_dir)
     bag = bagit.make_bag(master_dir)
@@ -82,6 +83,18 @@ def validate_bag(bag_dir):
     bad = 'CORRUPTED! bag at ' + bag_dir
     result = good if bag.is_valid() else bad
     print('| ' + result)
+
+def bag_filepaths(bag_dir):
+    manifest = bag_dir + '/manifest-sha256.txt'
+    filepaths = []
+    with open(manifest, 'r') as f:
+        for line in f:
+            filepath = re.search(r'(data.+)', line).group()
+            if filepath:
+                filepaths.append(filepath)
+            else:
+                filepaths.append('Not Found')
+    return filepaths
 
 
 def camel_case_to_spaces(string):
