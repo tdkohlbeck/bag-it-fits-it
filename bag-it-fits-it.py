@@ -67,11 +67,10 @@ utils.validate_bag(master)
 utils.run_fits(working, xml_dir, fits_dir)
 
 # convert xmls to dicts and squash 'em
-xml_files = [
-    xml for xml in os.listdir(xml_dir)
-]
+xml_files = [ xml for xml in os.listdir(xml_dir) ]
 flatFitsDicts = [
-    utils.xml_to_flat_dict(xml_dir + xml) for xml in xml_files
+    utils.xml_to_flat_dict(xml_dir + xml)
+    for xml in xml_files
 ]
 
 # place all dict keys in a list for csv headers
@@ -92,29 +91,25 @@ with open(manifest, 'r') as f:
             file_locations.append(match.group())
         else:
             file_locations.append('Not Found')
-        print(file_locations)
 
 
 # write values to relevant columns
 rows = []
-currentRow = 0
+current_row = 0
 for fitsDict in flatFitsDicts:
-    row = []
     for location in file_locations:
-        report = xml_files[currentRow]
+        report = xml_files[current_row]
         match = re.search(r'(.+)(?=.fits.xml)', report)
         filename = match.group()
-        print('filename: ' + filename)
-        print('location: ' + location)
         if filename == location[-len(filename):]:
             row = [ os.path.abspath(working + location) ]
     for header in headers:
         if header != 'filepath' and header in fitsDict:
             row.append(fitsDict[header])
         elif header != 'filepath':
-            row.append('?')
+            row.append('n/a')
     rows.append(row)
-    currentRow += 1
+    current_row += 1
 
 
 # validate working bag after scrape
@@ -126,12 +121,11 @@ clean_header_row = []
 for header in headers:
     match = re.search(r'(\w+)$', header)
     clean_header_row.append(
-        match.group()#        utils.camel_case_to_spaces(match.group())
+        utils.camel_case_to_spaces(match.group())
     )
 
-if not os.path.isdir(report_dir):
-    os.makedirs(report_dir)
-with open(report_dir +'/report.csv', 'w') as f:
+
+with open(report_dir +'/report.csv', 'w+') as f:
     pen = csv.writer(f)
     pen.writerow(clean_header_row)
     pen.writerows(rows)

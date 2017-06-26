@@ -16,6 +16,34 @@ errors = {
     )
 }
 
+def make_dir(filepath):
+    if os.path.exists(filepath):
+        user_choice = input('| WARNING! ' + filepath + ' exists. Overwrite? [Y/n]: ')
+        while True:
+            if 'y' in user_choice or '':
+                shutil.rmtree(filepath)
+                break
+            elif 'n' in user_choice:
+                print('| WARNING! using in-place ' + filepath)
+                return
+            else:
+                user_choice = input('Sorry? didn\'t quite catch that [Y/n]: ')
+    os.makedirs(filepath)
+
+def copy_dir(original_dir, copy_dir):
+    if os.path.exists(copy_dir):
+        user_choice = input('| WARNING! ' + copy_dir + ' exists. Overwrite? [Y/n]: ')
+        while True:
+            if 'y' in user_choice or '':
+                shutil.rmtree(copy_dir)
+                break
+            elif 'n' in user_choice:
+                print('| WARNING! using in-place ' + copy_dir)
+                return
+            else:
+                user_choice = input('Sorry? didn\'t quite catch that [Y/n]: ')
+    shutil.copytree(original_dir, copy_dir)
+
 def run_fits(in_dir, out_dir, fits_dir=None):
     is_win = platform.system() == 'Windows' # special child
     fits_script = r'\fits.bat' if is_win else '/fits.sh'
@@ -30,8 +58,7 @@ def run_fits(in_dir, out_dir, fits_dir=None):
         if not fits_dir:
             print(errors['fits'])
             quit()
-
-    os.makedirs(out_dir)
+    make_dir(out_dir)
     print('| FITS! running on working directory:')
     call([
         fits_dir + fits_script, '-r',
@@ -43,10 +70,10 @@ def run_fits(in_dir, out_dir, fits_dir=None):
 
 
 def create_bags(in_dir, master_dir, working_dir):
-    shutil.copytree(in_dir, master_dir)
+    copy_dir(in_dir, master_dir)
     bag = bagit.make_bag(master_dir)
     bag.save()
-    shutil.copytree(master_dir, working_dir)
+    copy_dir(master_dir, working_dir)
 
 
 def validate_bag(bag_dir):
