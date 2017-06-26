@@ -8,8 +8,9 @@
 # TODO: if folder exists... overwrite? user prompt?
 
 from subprocess import call
-import argparse, csv, filecmp, json, os, platform, re, shutil, sys
+import argparse, csv, filecmp, json, os, re, shutil, sys
 import bagit, xmltodict
+import utils
 
 
 parser = argparse.ArgumentParser(
@@ -20,7 +21,8 @@ parser = argparse.ArgumentParser(
     ),
     epilog=(
         'If master, working, xml, or csv are omitted, their location will default to output. '
-        'If output is omitted, its location will default to input'
+        'If output is omitted, its location will default to input. '
+        'If fits is omitted, script will look for fits folder in the script folder. '
     )
 )
 parser.add_argument('input',
@@ -47,120 +49,30 @@ parser.add_argument('-f', '--fits',
 args = parser.parse_args()
 
 
-errors = {
-    'arg_length': (
-        "|| bag-it-fits-it: ERROR\n"
-        "| please provide:\n"
-        "|  1. a directory to bag-n-fits\n"
-        "|  2. optionally a directory to place output\n"
-        "| if no second directory is provided, original location will be bagged\n"
-        "| example: $ bag-it-fits-it.py /dir/to/bag /dir/to/output"
-    ),
-    'fits': (
-        '|| bag-it-fits-it: ERROR\n'
-        '| please place fits in same directory as script\n'
-        '| and ensure the directory is named \'fits\''
-    ),
-    'spaces': (
-        '|| bag-it-fits-it: ERROR\n'
-        '| please remove all spaces from the output directory name'
-        '| note: not sure if this is true for full Windows paths...'
-    )
-}
-
-# util functions
-def create_bags(in_dir, master_dir, working_dir):
-    shutil.copytree(in_dir, master_dir)
-    bag = bagit.make_bag(master_dir)
-    bag.save()
-    shutil.copytree(master_dir, working_dir)
-def validate_bag(bag_dir):
-    bag = bagit.Bag(bag_dir)
-    good = 'VALIDATED! bag at ' + bag_dir
-    bad = 'CORRUPTED! bag at ' + bag_dir
-    result = good if bag.is_valid() else bad
-    print('| ' + result)
-# structured dict to serial (flat) dict
-def flattenDict(obj, delim):
-    val = {}
-    for i in obj:
-        if isinstance(obj[i], dict):
-            get = flattenDict(obj[i], delim)
-            for j in get:
-                val[ i + delim + j ] = get[j]
-        else:
-            val[i] = obj[i]
-    return val
-def camel_case_to_spaces(string):
-    converted = re.sub(r'(.)([A-Z][a-z]+)', r'\1 \2', string)
-    return re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', converted).title()
-# overload path primary with backup appending sub
-def path_overload(primary_dir, backup_dir, sub_dir=''):
-    if primary_dir:
-        return primary_dir + sub_dir
-    else:
-        return backup_dir + sub_dir
-
-
 if args.output and re.search(r'(\s)', args.output):
-    print(errors['spaces'])
+    print(utils.errors['spaces'])
     quit()
 
 
-output = path_overload(args.output, args.input, '') # args.output + 'output/' if args.output else to_bag + 'output/'
-master = path_overload(args.master, output, 'master/') # args.master + 'master/' if args.master else output + 'master/'
-working = path_overload(args.working, output, 'working/') # args.working + '/working-bag/' if args.working else output + '/working/'
-xml_dir = path_overload(args.xml, output, 'fits_xml/') # args.xml + '/fits-xml/' if args.xml else output + '/fits-xml/'
-report_dir = path_overload(args.csv, output) # args.csv if args.csv else output
-fits_dir = path_overload(args.fits, '') # args.fits if args.fits else ''
+output = utils.overload_path(args.output, args.input, '') # args.output + 'output/' if args.output else to_bag + 'output/'
+master = utils.overload_path(args.master, output, 'master/') # args.master + 'master/' if args.master else output + 'master/'
+working = utils.overload_path(args.working, output, 'working/') # args.working + '/working-bag/' if args.working else output + '/working/'
+xml_dir = utils.overload_path(args.xml, output, 'fits_xml/') # args.xml + '/fits-xml/' if args.xml else output + '/fits-xml/'
+report_dir = utils.overload_path(args.csv, output) # args.csv if args.csv else output
+fits_dir = utils.overload_path(args.fits, '') # args.fits if args.fits else ''
 
 
-# create bags, directories, validate master
-create_bags(args.input, master, working)
-validate_bag(master)
-
-
-# run FITS on working bag
-is_win = platform.system() == 'Windows' # special child
-fits_script = r'\fits.bat' if is_win else '/fits.sh'
-if not fits_dir:
-    print('| no fits location given, searching script directory...')
-    for item in os.listdir('.'):
-        is_fits = re.search(r'(fits)', item)
-        is_dir = os.path.isdir(item)
-        if is_fits and is_dir:
-            print('| fits directory found!')
-            fits_dir = item
-    if not fits_dir:
-        print('| unable to find a fits directory!')
-        print('| please specify a location using the --fits option')
-        print('| or place the fits directory in your script folder')
-        quit()
-
-os.makedirs(xml_dir)
-print('| running FITS on working directory:')
-call([
-    fits_dir + fits_script,
-    '-r',
-    '-i',
-    working + 'data/',
-    '-o',
-    xml_dir,
-    '-x'
-])
-print('| working directory successfully FITSed! :)')
-
+utils.create_bags(args.input, master, working)
+utils.validate_bag(master)
+utils.run_fits(working, xml_dir, fits_dir)
 
 # convert xmls to dicts and squash 'em
-flatFitsDicts = []
-fitsReportFiles = os.listdir(xml_dir)
-for filename in fitsReportFiles:
-    fitsXmlReport = open(xml_dir + filename)
-    fitsDict = xmltodict.parse(fitsXmlReport.read())
-    fitsXmlReport.close()
-    flatFitsDict = flattenDict(fitsDict, '__')
-    flatFitsDicts.append(flatFitsDict)
-
+xml_files = [
+    xml for xml in os.listdir(xml_dir)
+]
+flatFitsDicts = [
+    utils.xml_to_flat_dict(xml_dir + xml) for xml in xml_files
+]
 
 # place all dict keys in a list for csv headers
 headers = ['filepath']
@@ -180,19 +92,22 @@ with open(manifest, 'r') as f:
             file_locations.append(match.group())
         else:
             file_locations.append('Not Found')
+        print(file_locations)
 
 
 # write values to relevant columns
 rows = []
 currentRow = 0
 for fitsDict in flatFitsDicts:
+    row = []
     for location in file_locations:
-        report = fitsReportFiles[currentRow]
+        report = xml_files[currentRow]
         match = re.search(r'(.+)(?=.fits.xml)', report)
         filename = match.group()
+        print('filename: ' + filename)
+        print('location: ' + location)
         if filename == location[-len(filename):]:
             row = [ os.path.abspath(working + location) ]
-    # TODO: bag location, not fits xml location
     for header in headers:
         if header != 'filepath' and header in fitsDict:
             row.append(fitsDict[header])
@@ -203,7 +118,7 @@ for fitsDict in flatFitsDicts:
 
 
 # validate working bag after scrape
-validate_bag(working)
+utils.validate_bag(working)
 
 
 # write headers and rows to csv
@@ -211,7 +126,7 @@ clean_header_row = []
 for header in headers:
     match = re.search(r'(\w+)$', header)
     clean_header_row.append(
-        camel_case_to_spaces(match.group())
+        match.group()#        utils.camel_case_to_spaces(match.group())
     )
 
 if not os.path.isdir(report_dir):
@@ -224,7 +139,7 @@ with open(report_dir +'/report.csv', 'w') as f:
 
 # that's all folks!
 success_message = (
-    '| bags and report successfully created at: ' +
+    '| SUCCESS! bags and report successfully created at: ' +
     os.path.abspath(output)
 )
 print(success_message)
