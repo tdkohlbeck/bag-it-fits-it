@@ -89,9 +89,9 @@ def bag_filepaths(bag_dir):
     filepaths = []
     with open(manifest, 'r') as f:
         for line in f:
-            filepath = re.search(r'(data.+)', line).group()
-            if filepath:
-                filepaths.append(filepath)
+            filepath = re.search(r'(data.+)', line)
+            if filepath.group():
+                filepaths.append(filepath.group())
             else:
                 filepaths.append('Not Found')
     return filepaths

@@ -64,14 +64,8 @@ utils.create_bags(args.input, master, working)
 utils.validate_bag(master)
 utils.run_fits(working, xml_dir, fits_dir)
 
-
-# convert xmls to dicts and squash 'em
-xml_files = [ xml for xml in os.listdir(xml_dir) ]
-flat_reports = [
-    utils.xml_to_flat_dict(xml_dir + xml)
-    for xml in xml_files
-]
-
+xml_files = [ x for x in os.listdir(xml_dir) ]
+flat_reports = [ utils.xml_to_flat_dict(xml_dir + x) for x in xml_files ]
 
 # place every key in revery report in a list for csv headers
 headers = ['filepath']
@@ -88,11 +82,11 @@ rows = []
 current_row = 0
 for report in flat_reports:
     for filepath in filepaths:
-        report = xml_files[current_row]
-        match = re.search(r'(.+)(?=.fits.xml)', report)
+        report_name = xml_files[current_row]
+        match = re.search(r'(.+)(?=.fits.xml)', report_name)
         filename = match.group()
         if filename == filepath[-len(filename):]:
-            row = [ os.path.abspath(working + filepath) ]
+            row = [ os.path.abspath(working + filename) ]
     for header in headers:
         if header != 'filepath' and header in report:
             row.append(report[header])
