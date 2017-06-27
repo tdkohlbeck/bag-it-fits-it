@@ -16,7 +16,10 @@ errors = {
     )
 }
 
+# TODO: regex function
+
 def clean_path(path):
+    if not path: return
     # forward or backward slash?
     is_win = platform.system() == 'Windows'
     slash = '\\' if is_win else '/'

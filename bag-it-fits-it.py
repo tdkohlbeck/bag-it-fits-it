@@ -53,15 +53,23 @@ if args.output and re.search(r'(\s)', args.output):
     quit()
 
 
-output = utils.overload_path(args.output, args.input, '') # args.output + 'output/' if args.output else to_bag + 'output/'
-master = utils.overload_path(args.master, output, 'master/') # args.master + 'master/' if args.master else output + 'master/'
-working = utils.overload_path(args.working, output, 'working/') # args.working + '/working-bag/' if args.working else output + '/working/'
-xml_dir = utils.overload_path(args.xml, output, 'fits_xml/') # args.xml + '/fits-xml/' if args.xml else output + '/fits-xml/'
-report_dir = utils.overload_path(args.csv, output) # args.csv if args.csv else output
-fits_dir = utils.overload_path(args.fits, '') # args.fits if args.fits else ''
+args = vars(args) # args namespace -> args dict
+args = {
+    folder: utils.clean_path(path)
+    for folder, path in args.items()
+}
 
 
-utils.create_bags(args.input, master, working)
+output = utils.overload_path(args['output'], args['input'], '')
+master = utils.overload_path(args['master'], output, 'master/')
+working = utils.overload_path(args['working'], output, 'working/')
+xml_dir = utils.overload_path(args['xml'], output, 'fits_xml/')
+report_dir = utils.overload_path(args['csv'], output)
+fits_dir = utils.overload_path(args['fits'], '')
+
+
+
+utils.create_bags(args['input'], master, working)
 utils.validate_bag(master)
 utils.run_fits(working, xml_dir, fits_dir)
 
@@ -109,7 +117,7 @@ clean_header_row = [
 ]
 
 utils.create_report(
-    args.input,
+    args['input'],
     report_dir,
     clean_header_row,
     rows
