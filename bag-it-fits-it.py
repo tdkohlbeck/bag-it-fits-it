@@ -4,6 +4,7 @@
 # TODO: convert spaghetti to list comprehensions
 # TODO: lint(dirpath) to replace ' ' with '_', remove double slashes and flip if windows
 # TODO: check for spaces in all options
+# TODO: allow filename creation as cli options
 
 from subprocess import call
 import argparse, csv, filecmp, json, os, re, shutil, sys
@@ -108,8 +109,12 @@ for header in headers:
         utils.camel_case_to_spaces(match.group())
     )
 
-
-with open(report_dir +'/report.csv', 'w+') as f:
+match = re.search(r'(\w+).$', args.input)
+folder_name = match.group()
+if folder_name[-1:] == '/':
+    folder_name = folder_name[:-1]
+report_name = '/report-' + folder_name + '.csv'
+with open(report_dir + report_name, 'w+') as f:
     pen = csv.writer(f)
     pen.writerow(clean_header_row)
     pen.writerows(rows)
