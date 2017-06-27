@@ -16,6 +16,13 @@ errors = {
     )
 }
 
+def clean_path(path):
+    # forward or backward slash?
+    is_win = platform.system() == 'Windows'
+    slash = '\\' if is_win else '/'
+    path = re.sub(r'([\/\\])', slash, path) # tear out the lot of 'em!
+    return os.path.abspath(path) + slash # abspath strips last slash?
+
 # TODO: os.makedirs(handle(file)), os.copytree(handle(file))
 def make_dir(filepath):
     if os.path.exists(filepath):
