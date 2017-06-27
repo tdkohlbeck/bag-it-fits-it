@@ -171,7 +171,13 @@ clean_header_row = []
 for header in headers:
     match = re.search(r'(\w+)$', header)
     clean_header_row.append(match.group())
-with open(output +'/report.csv', 'w') as f:
+
+match = re.search(r'(\w+).$', to_bag)
+folder_name = match.group()
+if folder_name[-1:] == '/':
+    folder_name = folder_name[:-1]
+report_name = '/report-' + folder_name + '.csv'
+with open(output + report_name, 'w') as f:
     pen = csv.writer(f)
     pen.writerow(clean_header_row)
     pen.writerows(rows)
