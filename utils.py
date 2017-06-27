@@ -1,5 +1,5 @@
 from subprocess import call
-import os, platform, re, shutil
+import csv, os, platform, re, shutil
 import bagit, xmltodict
 
 errors = {
@@ -103,11 +103,24 @@ def bag_filepaths(bag_dir):
                 filepaths.append('Not Found')
     return filepaths
 
+def create_report(input_dir, report_dir, headers, rows):
+    found = re.search(r'(\w+).$', input_dir)
+    folder_name = found.group()
+    if folder_name[-1:] == '/':
+        folder_name = folder_name[:-1]
+    report_name = '/report-' + folder_name + '.csv'
+    with open(report_dir + report_name, 'w+') as f:
+        pen = csv.writer(f)
+        pen.writerow(headers)
+        pen.writerows(rows)
 
 def camel_case_to_spaces(string):
     converted = re.sub(r'(.)([A-Z][a-z]+)', r'\1 \2', string)
     return re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', converted).title()
 
+def last_section(header):
+    found = re.search(r'(\w+)$', header)
+    return found.group()
 
 # overload path primary with backup, appending sub
 def overload_path(primary_dir, backup_dir, sub_dir=''):

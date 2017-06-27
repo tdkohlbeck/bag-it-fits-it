@@ -101,28 +101,22 @@ for report in flat_reports:
 utils.validate_bag(working)
 
 
-# write headers and rows to csv
-clean_header_row = []
-for header in headers:
-    match = re.search(r'(\w+)$', header)
-    clean_header_row.append(
-        utils.camel_case_to_spaces(match.group())
+clean_header_row = [
+    utils.camel_case_to_spaces(
+        utils.last_section(header)
     )
+    for header in headers
+]
 
-match = re.search(r'(\w+).$', args.input)
-folder_name = match.group()
-if folder_name[-1:] == '/':
-    folder_name = folder_name[:-1]
-report_name = '/report-' + folder_name + '.csv'
-with open(report_dir + report_name, 'w+') as f:
-    pen = csv.writer(f)
-    pen.writerow(clean_header_row)
-    pen.writerows(rows)
-
+utils.create_report(
+    args.input,
+    report_dir,
+    clean_header_row,
+    rows
+)
 
 # that's all folks!
-success_message = (
+print((
     '| SUCCESS! bags and report successfully created at: ' +
     os.path.abspath(output)
-)
-print(success_message)
+))
