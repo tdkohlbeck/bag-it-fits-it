@@ -75,3 +75,19 @@ $
 ```sh
 ~/path/to/bag-it-fits-it $ bag-it-fits-it.py path/to/bag path/to/output
 ```
+
+#### Examples
+
+###### Windows
+1. Run `bag-it-fits-it.py`, located at `C:\Users\Me\Desktop\bag-it-fits-it-master\` on a folder located at `C:\Users\Me\Desktop\vacay_pics\` and want to place the bags and reports at `C:\Users\Me\Desktop\photo_album_reports`:
+```msdos
+C:\Users\Me\Desktop\bag-it-fits-it-master>bag-it-fits-it.py "C:\Users\Me\Desktop\vacay_pics\"
+"C:\Users\Me\Desktop\photo_album_reports"
+```
+(all one line)
+
+###### MacOS
+(TODO)
+#### Pitfalls
+* Avoid using an output path that contains spaces.
+* Windows: Surround both paths in quotes.
