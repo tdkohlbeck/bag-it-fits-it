@@ -91,3 +91,4 @@ C:\Users\Me\Desktop\bag-it-fits-it-master>bag-it-fits-it.py "C:\Users\Me\Desktop
 #### Pitfalls
 * Avoid using an output path that contains spaces.
 * Windows: Surround both paths in quotes.
+* When extracting fits-x.x.x.zip, it may create two nested folders. Make sure `script_dir/fits` contains `fits.bat` or `fits.sh`, and isn't located in another folder, e.g. `fits/fits-1.1.1/fits.sh`
