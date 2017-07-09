@@ -169,8 +169,10 @@ else:
 # write headers and rows to csv
 clean_header_row = []
 for header in headers:
-    match = re.search(r'(\w+)$', header)
-    clean_header_row.append(match.group())
+    match = re.search(r'(\w+)$', header).group()
+    converted = re.sub(r'(.)([A-Z][a-z]+)', r'\1 \2', match)
+    with_spaces = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', converted).title()
+    clean_header_row.append(with_spaces)
 
 match = re.search(r'(\w+).$', to_bag)
 folder_name = match.group()
