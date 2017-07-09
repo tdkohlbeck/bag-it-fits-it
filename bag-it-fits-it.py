@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-import csv, filecmp, json, os, platform, re, shutil, subprocess, sys
+import csv, filecmp, glob, json, os, platform, re, shutil, subprocess, sys
 import bagit, xmltodict
+from pprint import pprint as pprnt
 
 # TODO: fits flag so they don't have to move/download it
 # TODO: download/unzip fits if not present
@@ -119,7 +120,7 @@ for filename in fitsReportFiles:
 
 
 # place all dict keys in a list for csv headers
-headers = ['filepath']
+headers = ['filepath', 'originalFilepath' ]
 for fitsDict in flatFitsDicts:
     for key in sorted(fitsDict):
         if key not in headers:
@@ -137,6 +138,11 @@ with open(manifest, 'r') as f:
         else:
             file_locations.append('Not Found')
 
+orig_file_locations = [
+    file
+    for file in glob.glob(to_bag + '/**/*.*', recursive=True)
+]
+
 
 # write values to relevant columns
 rows = []
@@ -148,11 +154,16 @@ for fitsDict in flatFitsDicts:
         filename = match.group()
         if filename == location[-len(filename):]:
             row = [ os.path.abspath(working + location) ]
-    # TODO: bag location, not fits xml location
+    for location in orig_file_locations:
+        report = fitsReportFiles[currentRow]
+        match = re.search(r'(.+)(?=.fits.xml)', report)
+        filename = match.group()
+        if filename == location[-len(filename):]:
+            row.append(location)
     for header in headers:
-        if header != 'filepath' and header in fitsDict:
+        if header != 'filepath' and header != 'originalFilepath' and header in fitsDict:
             row.append(fitsDict[header])
-        elif header != 'filepath':
+        elif header != 'filepath' and header != 'originalFilepath':
             row.append('?')
     rows.append(row)
     currentRow += 1
