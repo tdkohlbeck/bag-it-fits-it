@@ -122,7 +122,7 @@ for filename in fitsReportFiles:
 
 
 # place all dict keys in a list for csv headers
-headers = ['filepath', 'originalFilepath' ]
+headers = ['filepath', 'originalFilepath' , 'filetype']
 for fitsDict in flatFitsDicts:
     for key in sorted(fitsDict):
         if key not in headers:
@@ -162,10 +162,17 @@ for fitsDict in flatFitsDicts:
         filename = match.group()
         if filename == location[-len(filename):]:
             row.append(location)
+    for location in orig_file_locations:
+        report = fitsReportFiles[currentRow]
+        filename = re.search(r'(.+)(?=.fits.xml)', report).group()
+        match = re.search(r'\.(.*)$', location)
+        filetype = match.group()
+        if filename == location[-len(filename):]:
+            row.append(filetype[1:])
     for header in headers:
-        if header != 'filepath' and header != 'originalFilepath' and header in fitsDict:
+        if header != 'filepath' and header != 'originalFilepath' and header != 'filetype' and header in fitsDict:
             row.append(fitsDict[header])
-        elif header != 'filepath' and header != 'originalFilepath':
+        elif header != 'filepath' and header != 'originalFilepath' and header != 'filetype':
             row.append('?')
     rows.append(row)
     currentRow += 1
