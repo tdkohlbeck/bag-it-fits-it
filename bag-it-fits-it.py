@@ -113,10 +113,12 @@ flatFitsDicts = []
 fitsReportFiles = sorted(os.listdir(fits_xml))
 for filename in fitsReportFiles:
     fitsXmlReport = open(fits_xml + filename)
-    fitsDict = xmltodict.parse(fitsXmlReport.read())
+    contents = fitsXmlReport.read()
+    if contents:
+        fitsDict = xmltodict.parse(contents)
+        flatFitsDict = flattenDict(fitsDict, '__')
+        flatFitsDicts.append(flatFitsDict)
     fitsXmlReport.close()
-    flatFitsDict = flattenDict(fitsDict, '__')
-    flatFitsDicts.append(flatFitsDict)
 
 
 # place all dict keys in a list for csv headers
