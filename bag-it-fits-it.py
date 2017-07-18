@@ -118,6 +118,8 @@ for filename in fitsReportFiles:
         fitsDict = xmltodict.parse(contents)
         flatFitsDict = flattenDict(fitsDict, '__')
         flatFitsDicts.append(flatFitsDict)
+    else:
+        flatFitsDicts.append({})
     fitsXmlReport.close()
 
 
@@ -165,8 +167,7 @@ for fitsDict in flatFitsDicts:
     for location in orig_file_locations:
         report = fitsReportFiles[currentRow]
         filename = re.search(r'(.+)(?=.fits.xml)', report).group()
-        match = re.search(r'\.(.*)$', location)
-        filetype = match.group()
+        filetype = re.search(r'\.(.*)$', location).group()
         if filename == location[-len(filename):]:
             row.append(filetype[1:])
     for header in headers:
